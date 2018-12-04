@@ -1,0 +1,3 @@
+[submodule "environments/GridworldEnv"]
+	path = environments/GridworldEnv
+	url = https://github.com/mekhlos/GridworldEnv.git
