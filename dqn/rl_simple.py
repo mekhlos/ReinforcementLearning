@@ -1,6 +1,7 @@
 import sys
 import os
 import root_file
+import time
 
 gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
 sys.path.append(gwpath)
@@ -44,24 +45,26 @@ def replay():
     non_terminal_flag = 1 - terminal_flag
     new_q_values = network.predict(new_state[non_terminal_flag])
 
-    target = q_values
+    target = q_values + np.random.random(q_values.shape) * 0.0001
     target[range(len(target)), action][terminal_flag] = reward[terminal_flag]
     target[range(len(target)), action][non_terminal_flag] = reward[non_terminal_flag] + GAMMA * new_q_values.argmax(1)
 
-    # print(state)
     network.learn(state, target)
 
 
 for i in range(N_EPISODES):
     state = env.reset()
+    print('Reset')
+    print(env._gridworld.player_position)
     state = process_state(state)
     total_reward = 0
 
-    for j in range(20):
+    for j in range(100):
         q_values = network.predict(state.reshape(1, -1))
 
         action = epsilon_greedy(q_values)
         new_state, reward, is_terminal, _ = env.take_action(Actions.get_actions()[action])
+        env.display()
         new_state = process_state(new_state)
 
         replay_memory.add(state, action, reward, new_state, is_terminal)
@@ -71,8 +74,9 @@ for i in range(N_EPISODES):
             replay()
 
         if is_terminal:
+            print(f'Finished in {j} steps, reward {reward} and total {total_reward}')
             break
 
         state = new_state
 
-    print(total_reward)
+    print('Total:', total_reward)
