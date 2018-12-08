@@ -8,10 +8,12 @@ class Network:
     def __init__(self, n_actions):
         self.n_actions = n_actions
         self.mlp = MLPRegressor(
-            hidden_layer_sizes=(10, n_actions),
+            hidden_layer_sizes=(128, n_actions),
             max_iter=1,
-            solver='adam',
-            verbose=10,
+            solver='sgd',
+            activation='identity',
+            # verbose=10,
+            learning_rate_init=1e-3,
             warm_start=True
         )
 
@@ -19,7 +21,7 @@ class Network:
         try:
             return self.mlp.predict(x)
         except NotFittedError:
-            return np.random.random((len(x), self.n_actions)) * 0.01
+            return np.random.standard_normal((len(x), self.n_actions)) * 0.01
 
     def learn(self, x, y):
         self.mlp.fit(x, y)
