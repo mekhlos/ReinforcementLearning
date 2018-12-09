@@ -2,33 +2,31 @@ import tensorflow as tf
 
 
 class Network:
-    def __init__(self, input_shape, output_shape):
-        self.input_shape = input_shape
-        self.output_shape = output_shape
+    def __init__(self, input_dim, output_dim):
+        self.input_dim = input_dim
+        self.output_dim = output_dim
 
-        self.x = tf.placeholder(dtype=tf.int64, shape=self.input_shape, name='input_x')
-        self.graph = self.build_graph()
+        self.x = tf.placeholder(dtype=tf.float32, shape=[None, self.input_dim], name='input_x')
+        self.y_pred = self.build_graph()
 
     def build_graph(self):
-        n_classes = self.output_shape[1]
-
-        layer1 = tf.layers.dense(self.x, 128, activation=tf.nn.relu)
-        layer2 = tf.layers.dense(layer1, n_classes, activation=tf.identity)
+        layer1 = tf.layers.dense(self.x, 128, activation=tf.nn.relu, name='d_1')
+        layer2 = tf.layers.dense(layer1, self.output_dim, activation=tf.identity, name='d_out')
 
         return layer2
 
 
-class Optimiser:
-    def __init__(self, graph, x, session: tf.Session, output_shape):
-        self.graph = graph
+class NetworkTrainer:
+    def __init__(self, session: tf.Session, y_pred, x, output_dim):
+        self.session = session
+        self.y_pred = y_pred
         self.x = x
-        self.y = tf.placeholder(dtype=tf.int64, shape=output_shape, name='output_y')
+        self.y_true = tf.placeholder(dtype=tf.float32, shape=[None, output_dim], name='output_y')
         self.loss = self.get_loss()
         self.train_op = self.build_optimiser()
-        self.session = session
 
     def get_loss(self):
-        loss = tf.losses.mean_squared_error(self.y, self.graph)
+        loss = tf.losses.mean_squared_error(self.y_true, self.y_pred)
         return loss
 
     def build_optimiser(self):
@@ -38,7 +36,7 @@ class Optimiser:
     def optimise(self, x, y):
         feed_dict = {
             self.x: x,
-            self.y: y
+            self.y_true: y
         }
 
         self.session.run([self.train_op], feed_dict=feed_dict)
@@ -46,7 +44,7 @@ class Optimiser:
     def compute_loss(self, x, y):
         feed_dict = {
             self.x: x,
-            self.y: y
+            self.y_true: y
         }
 
         loss = self.session.run(self.loss, feed_dict=feed_dict)
@@ -54,16 +52,38 @@ class Optimiser:
 
 
 class NetworkInterface:
-    def __init__(self, graph, x, y, session: tf.Session):
-        self.graph = graph
+    def __init__(self, session: tf.Session, x, y_pred):
         self.x = x
-        self.y = y
+        self.y_pred = y_pred
         self.session = session
 
     def predict(self, x):
         feed_dict = {self.x: x}
-        res = self.session.run(self.y, feed_dict=feed_dict)
+        res = self.session.run(self.y_pred, feed_dict=feed_dict)
         return res
+
+
+class TensorflowSaver:
+    def __init__(self):
+        pass
+
+
+class NetworkManager:
+    def __init__(self, input_dim, output_dim):
+        self.session = tf.Session()
+        self.network = Network(input_dim, output_dim)
+        self.trainer = NetworkTrainer(self.session, self.network.y_pred, self.network.x, output_dim)
+        self.network_interface = NetworkInterface(self.session, self.network.x, self.network.y_pred)
+        init = tf.global_variables_initializer()
+
+        self.session.run(init)
+
+    def predict(self, x):
+        return self.network_interface.predict(x)
+
+    def learn(self, x, y):
+        self.trainer.optimise(x, y)
+        return self.trainer.compute_loss(x, y)
 
 
 if __name__ == '__main__':
