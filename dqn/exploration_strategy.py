@@ -3,12 +3,13 @@ import numpy as np
 
 class ExplorationStrategy:
     def __init__(self, n_reductions, epsilon_init, final_epsilon):
+        self.initial_epsilon = epsilon_init
         self.epsilon = epsilon_init
         self.n_reductions = n_reductions
         self.final_epsilon = final_epsilon
 
     def update_epsilon(self):
-        x = (self.epsilon - self.final_epsilon) / self.n_reductions
+        x = (self.initial_epsilon - self.final_epsilon) / self.n_reductions
         self.epsilon = max(self.epsilon - x, self.final_epsilon)
 
     def epsilon_greedy(self, q_values, force_random=False):
