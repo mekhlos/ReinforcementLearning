@@ -12,6 +12,10 @@ class ExplorationStrategy:
         x = (self.initial_epsilon - self.final_epsilon) / self.n_reductions
         self.epsilon = max(self.epsilon - x, self.final_epsilon)
 
+    def update_epsilon2(self):
+        x = (self.final_epsilon / self.initial_epsilon) ** (1 / self.n_reductions)
+        self.epsilon = max(self.epsilon * x, self.final_epsilon)
+
     def epsilon_greedy(self, q_values, force_random=False):
         if np.random.random() < self.epsilon or force_random:
             return np.random.randint(q_values.shape[-1])

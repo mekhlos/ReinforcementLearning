@@ -7,7 +7,7 @@ sys.path.append(gwpath)
 
 import numpy as np
 
-from dqn.tf_network import NetworkManager
+from dqn.brain.tf_network import NetworkManager
 from dqn.brain.replay_memory import ReplayMemory
 from dqn.exploration_strategy import ExplorationStrategy
 from utils import visualiser
@@ -16,18 +16,19 @@ from environments.GridworldEnv.grid_configs import configs
 from environments.GridworldEnv.gridworld import Actions
 from dqn.brain import q_learning
 
-N_EPISODES = 1500
+N_EPISODES = 2500
 # START_REPLAY = 5000
-EPISODE_LENGTH = 50
-MEMORY_SIZE = 300
-REPLAY_FREQUENCY = 1
+EPISODE_LENGTH = 70
+MEMORY_SIZE = 256
+REPLAY_FREQUENCY = 4
 START_EPSILON = 1
-STOP_EPSILON = 0.01
+STOP_EPSILON = 0.1
 INPUT_DIM = 3 * 3 * 3
 N_ACTIONS = 4
-BATCH_SIZE = 50
-DISCOUNT_FACTOR = 0.98
+BATCH_SIZE = 64
+DISCOUNT_FACTOR = 0.975
 ALPHA = 1 / BATCH_SIZE / 100
+USE_TABLE = False
 
 replay_memory = ReplayMemory(MEMORY_SIZE)
 # network = Network(N_ACTIONS)
@@ -35,7 +36,7 @@ network_manager = NetworkManager(INPUT_DIM, N_ACTIONS)
 q_table = q_learning.QTable(9, N_ACTIONS)
 env = gridworld_env.GridworldEnv(3, 3, grid=configs.to_state(configs.config4))
 
-exploration_helper = ExplorationStrategy(N_EPISODES * 0.75, START_EPSILON, STOP_EPSILON)
+exploration_helper = ExplorationStrategy(N_EPISODES * 0.8, START_EPSILON, STOP_EPSILON)
 plotter = visualiser.PlotManager()
 
 
@@ -63,7 +64,8 @@ def replay():
         reward[non_terminal_flag] + DISCOUNT_FACTOR * new_q_values.max(1)
 
     # network.learn(state, target)
-    network_manager.learn(state, target)
+    loss = network_manager.learn(state, target)
+    print(loss)
 
 
 def replay_table():
@@ -89,11 +91,13 @@ for i in range(N_EPISODES):
 
     for j in range(EPISODE_LENGTH):
         # q_values = network.predict(state.reshape(1, -1))
-        # q_values = network_manager.predict(state.reshape(1, -1))
-        q_values = add_noise(q_table.get_q_values_for_state(state.squeeze()))
+        if USE_TABLE:
+            q_values = add_noise(q_table.get_q_values_for_state(state.squeeze()))
+        else:
+            q_values = network_manager.predict(state.reshape(1, -1))
         # print('q values', q_values, len(q_values))
         action = exploration_helper.epsilon_greedy(q_values)
-        new_state, reward, is_terminal, _ = env.take_action(Actions.get_actions()[action])
+        new_state, reward, is_terminal, _ = env.update(Actions.get_actions()[action])
         env.display()
         new_state = process_state(new_state)
 
@@ -101,7 +105,10 @@ for i in range(N_EPISODES):
         total_reward += reward
 
         if len(replay_memory) > BATCH_SIZE and j % REPLAY_FREQUENCY == 0:
-            replay_table()
+            if USE_TABLE:
+                replay_table()
+            else:
+                replay()
 
         if is_terminal:
             print(f'Finished in {j} steps, reward {reward} and total {total_reward}')

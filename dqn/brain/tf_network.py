@@ -1,4 +1,5 @@
 import tensorflow as tf
+from utils import logging_helper
 
 
 class Network:
@@ -10,10 +11,11 @@ class Network:
         self.y_pred = self.build_graph()
 
     def build_graph(self):
-        layer1 = tf.layers.dense(self.x, 128, activation=tf.nn.relu, name='d_1')
-        layer2 = tf.layers.dense(layer1, self.output_dim, activation=tf.identity, name='d_out')
+        layer1 = tf.layers.dense(self.x, 512, activation=tf.nn.sigmoid, trainable=True, name='l_1')
+        layer2 = tf.layers.dropout(layer1, 0.2, training=True, name='l_2')
+        layer3 = tf.layers.dense(layer2, self.output_dim, activation=tf.identity, trainable=True, name='l_out')
 
-        return layer2
+        return layer3
 
 
 class NetworkTrainer:
@@ -30,7 +32,7 @@ class NetworkTrainer:
         return loss
 
     def build_optimiser(self):
-        train_op = tf.train.AdamOptimizer().minimize(self.loss)
+        train_op = tf.train.RMSPropOptimizer(1e-3).minimize(self.loss)
         return train_op
 
     def optimise(self, x, y):
@@ -70,6 +72,7 @@ class TensorflowSaver:
 
 class NetworkManager:
     def __init__(self, input_dim, output_dim):
+        self._logger = logging_helper.get_logger(self.__class__.__name__)
         self.session = tf.Session()
         self.network = Network(input_dim, output_dim)
         self.trainer = NetworkTrainer(self.session, self.network.y_pred, self.network.x, output_dim)
