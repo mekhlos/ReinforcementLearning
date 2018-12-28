@@ -11,7 +11,7 @@ class Network:
         self.y_pred = self.build_graph()
 
     def build_graph(self):
-        layer1 = tf.layers.dense(self.x, 512, activation=tf.nn.sigmoid, trainable=True, name='l_1')
+        layer1 = tf.layers.dense(self.x, 100, activation=tf.nn.sigmoid, trainable=True, name='l_1')
         layer2 = tf.layers.dropout(layer1, 0.2, training=True, name='l_2')
         layer3 = tf.layers.dense(layer2, self.output_dim, activation=tf.identity, trainable=True, name='l_out')
 
@@ -83,6 +83,9 @@ class NetworkManager:
 
     def predict(self, x):
         return self.network_interface.predict(x)
+
+    def predict_one(self, x):
+        return self.predict(x.reshape(1, -1))
 
     def learn(self, x, y):
         self.trainer.optimise(x, y)

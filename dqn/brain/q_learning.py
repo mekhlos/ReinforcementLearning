@@ -33,6 +33,9 @@ class QTable:
         ix = self.state_to_ix(state)
         return self.table[ix]
 
+    def predict_one(self, state):
+        return self.get_q_values_for_state(state)
+
     def __repr__(self):
         return str(self.table)
 
