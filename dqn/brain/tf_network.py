@@ -11,11 +11,14 @@ class Network:
         self.y_pred = self.build_graph()
 
     def build_graph(self):
-        layer1 = tf.layers.dense(self.x, 100, activation=tf.nn.sigmoid, trainable=True, name='l_1')
+        layer1 = tf.layers.dense(self.x, 512, activation=tf.nn.tanh, trainable=True, use_bias=True, name='l_1')
         layer2 = tf.layers.dropout(layer1, 0.2, training=True, name='l_2')
-        layer3 = tf.layers.dense(layer2, self.output_dim, activation=tf.identity, trainable=True, name='l_out')
+        # layer3 = tf.layers.dense(layer2, 512, activation=tf.nn.tanh, trainable=True, use_bias=True, name='l_3')
+        # layer4 = tf.layers.dropout(layer3, 0.2, training=True, name='l_4')
+        layer5 = tf.layers.dense(layer2, self.output_dim, activation=tf.nn.tanh, use_bias=True, trainable=True,
+                                 name='l_out')
 
-        return layer3
+        return layer5
 
 
 class NetworkTrainer:

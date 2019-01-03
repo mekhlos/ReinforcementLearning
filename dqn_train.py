@@ -43,38 +43,39 @@ class Agent:
         self.environment.update(action)
 
 
-def batch_replay(network_manager, batch_size, discount_factor):
+def batch_replay(network_manager, replay_memory, batch_size, discount_factor):
     state, action, reward, new_state, terminal_flag = replay_memory.sample(batch_size)
     q_values = network_manager.predict(state)
-    non_terminal_flag = 1 - terminal_flag
-    new_q_values = network_manager.predict(new_state[non_terminal_flag])
+    terminal_ix = np.where(terminal_flag > 0)[0]
+    non_terminal_ix = np.where(terminal_flag < 1)[0]
+    new_q_values = network_manager.predict(new_state[non_terminal_ix])
 
     target = q_values.copy()
-    target[range(len(target)), action][terminal_flag] = reward[terminal_flag]
-    target[range(len(target)), action][non_terminal_flag] = \
-        reward[non_terminal_flag] + discount_factor * new_q_values.max(1)
+    target[terminal_ix, action[terminal_ix]] = reward[terminal_ix]
+    target[non_terminal_ix, action[non_terminal_ix]] = \
+        reward[non_terminal_ix] + discount_factor * new_q_values.max(1)
 
     loss = network_manager.learn(state, target)
     return loss
 
 
-def iterative_replay(network_manager, batch_size, discount_factor):
+def iterative_replay(network_manager, replay_memory, batch_size, discount_factor):
     state, action, reward, new_state, terminal_flag = replay_memory.sample(batch_size)
     q_values = network_manager.predict(state)
     new_q_values = network_manager.predict(new_state)
     targets = q_values.copy()
 
-    for i, (r, t, new_q_value) in enumerate(zip(reward, terminal_flag, new_q_values)):
+    for i, (r, a, t, new_q_value) in enumerate(zip(reward, action, terminal_flag, new_q_values)):
         if t:
-            targets[i] = r
+            targets[i][a] = r
         else:
-            targets[i] = r + discount_factor + new_q_value.max()
+            targets[i][a] = r + discount_factor * new_q_value.max()
 
     loss = network_manager.learn(state, targets)
     return loss
 
 
-def table_replay(q_table, batch_size, discount_factor):
+def table_replay(q_table, replay_memory, batch_size, discount_factor):
     alpha = 1 / batch_size / 100
     batch = replay_memory.sample(batch_size)
 
@@ -84,7 +85,7 @@ def table_replay(q_table, batch_size, discount_factor):
         if t:
             target = r
         else:
-            target = r + discount_factor + new_q.max()
+            target = r + discount_factor * new_q.max()
 
         update = (1 - alpha) * old_q + alpha * target
 
@@ -102,12 +103,15 @@ class DQNTeacher:
         self.exploration_helper = exploration_helper
         self.current_episode = 0
         self.plot_manager = visualiser.DataPlotter()
-        self.plot_manager.add_plot('loss', (0, settings.N_EPISODES), (0, 100), 'loss')
-        self.plot_manager.add_plot('reward', (0, settings.N_EPISODES), (-100, 20), 'reward')
+        self.plot_manager.add_plot('loss', (0, settings.N_EPISODES), (-1, 10), 'loss')
+        self.plot_manager.add_plot('reward', (0, settings.N_EPISODES), (-50, 20), 'reward')
         self.settings = settings
         self.loss = []
         self.rewards = []
         self.replay = replay_f
+        self.test_q_table = q_learning.QTable(settings.INPUT_DIM // 3, 4)
+
+        # self.plot_manager.add_plot('q_values', (0, settings.N_EPISODES), (0, 100), 'q_values')
 
     @staticmethod
     def add_noise(x):
@@ -128,14 +132,16 @@ class DQNTeacher:
 
                 action = self.exploration_helper.epsilon_greedy(q_values)
                 new_state, reward, is_terminal, _ = self.env.update(Actions.get_actions()[action])
-                self.env.display()
+                if i % 20 == 0:
+                    self.env.display()
                 new_state = self.agent.observe()
 
                 replay_memory.add(state, action, reward, new_state, is_terminal)
                 total_reward += reward
 
                 if len(replay_memory) > self.settings.BATCH_SIZE and j % self.settings.REPLAY_FREQUENCY == 0:
-                    loss = self.replay(self.network_manager, self.settings.BATCH_SIZE, self.settings.DISCOUNT_FACTOR)
+                    loss = self.replay(self.network_manager, self.replay_memory, self.settings.BATCH_SIZE,
+                                       self.settings.DISCOUNT_FACTOR)
                     self.loss[i] += loss
 
                 if is_terminal:
@@ -144,18 +150,56 @@ class DQNTeacher:
 
                 state = new_state
 
+                if i % 10 == 0:
+                    self.test_q_table.update(state, action, q_values.max())
+
             exploration_helper.update_epsilon()
             self.rewards.append(total_reward)
             print(f'Epsilon: {exploration_helper.epsilon}')
             print(f'Total reward: {total_reward}')
-            if i % 10 == 0:
+            if i % 20 == 0:
                 r = visualiser.moving_average(self.rewards, 100)[-1]
                 l = visualiser.moving_average(self.loss, 100)[-1]
+                print(f'loss: {l}')
                 self.plot_manager.update_plot('reward', i, r)
                 self.plot_manager.update_plot('loss', i, l)
+                print(self.test_q_table)
+
+
+config = configs.config3
+M = len(config)
+N = len(config[0])
 
 
 class Settings:
+    N_EPISODES = 1000
+    EPISODE_LENGTH = 100
+    MEMORY_SIZE = 400
+    REPLAY_FREQUENCY = 2
+    START_EPSILON = 1
+    STOP_EPSILON = 0.01
+    INPUT_DIM = M * N * 3
+    N_ACTIONS = 4
+    BATCH_SIZE = 32
+    DISCOUNT_FACTOR = 0.99
+    ALPHA = 1 / BATCH_SIZE / 100
+
+
+class Settings2:
+    N_EPISODES = 2000
+    EPISODE_LENGTH = 300
+    MEMORY_SIZE = 600
+    REPLAY_FREQUENCY = 3
+    START_EPSILON = 1
+    STOP_EPSILON = 0.01
+    INPUT_DIM = M * N * 3
+    N_ACTIONS = 4
+    BATCH_SIZE = 64
+    DISCOUNT_FACTOR = 0.985
+    ALPHA = 1 / BATCH_SIZE / 100
+
+
+class TableSettings:
     N_EPISODES = 2500
     EPISODE_LENGTH = 70
     MEMORY_SIZE = 400
@@ -170,12 +214,13 @@ class Settings:
 
 
 if __name__ == '__main__':
-    env = gridworld_env.GridworldEnv(3, 3, grid=configs.to_state(configs.config4))
-    exploration_helper = ExplorationStrategy(Settings.N_EPISODES * 0.8, Settings.START_EPSILON, Settings.STOP_EPSILON)
+    settings = Settings()
+    env = gridworld_env.GridworldEnv(M, N, grid=configs.to_state(config))
+    exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
     agent = Agent('test1', env)
-    replay_memory = ReplayMemory(Settings.MEMORY_SIZE)
-    network_manager = NetworkManager(Settings.INPUT_DIM, Settings.N_ACTIONS)
-    q_table = q_learning.QTable(9, Settings.N_ACTIONS)
-    dqn = DQNTeacher(agent, replay_memory, env, network_manager, exploration_helper, iterative_replay, Settings())
+    replay_memory = ReplayMemory(settings.MEMORY_SIZE)
+    network_manager = NetworkManager(settings.INPUT_DIM, settings.N_ACTIONS)
+    q_table = q_learning.QTable(16, settings.N_ACTIONS)
+    dqn = DQNTeacher(agent, replay_memory, env, network_manager, exploration_helper, iterative_replay, settings)
     # dqn = DQNTeacher(agent, replay_memory, env, q_table, exploration_helper, table_replay, Settings())
     dqn.train()

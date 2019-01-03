@@ -27,14 +27,6 @@ class DataPlotter:
         p.set_ylabel(ylabel)
         self.plots[name] = (f, p)
 
-    # def update_lot(self, name, values):
-    #     f, p = self.plots[name]
-    #
-    #     p.clear()
-    #     p.plot(values)
-    #     p.set_xlabel('epochs')
-    #     p.set_ylabel('loss')
-
     def update_plot(self, name, i, value):
         f, p = self.plots[name]
         p.scatter(i, value)
