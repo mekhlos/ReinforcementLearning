@@ -1,7 +1,7 @@
 import sys
 import os
-import time
 import root_file
+import rl
 
 gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
 sys.path.append(gwpath)
@@ -16,31 +16,6 @@ from environments.GridworldEnv import gridworld_env
 from environments.GridworldEnv.grid_configs import configs
 from environments.GridworldEnv.gridworld import Actions
 from dqn.brain import q_learning
-
-
-class QValueManager:
-    def __init__(self):
-        pass
-
-    def get_q_values(self, state):
-        pass
-
-    def update_q_values(self, state, value):
-        pass
-
-
-class Agent:
-    def __init__(self, agent_id, environment):
-        self.agent_id = agent_id
-        self.environment = environment
-
-    def observe(self):
-        environment_state = self.environment.get_state()
-        state = environment_state[[0, 1, 3]]
-        return state.flatten()
-
-    def take_action(self, action):
-        self.environment.update(action)
 
 
 def batch_replay(network_manager, replay_memory, batch_size, discount_factor):
@@ -95,7 +70,7 @@ def table_replay(q_table, replay_memory, batch_size, discount_factor):
 
 
 class DQNTeacher:
-    def __init__(self, agent: Agent, replay_memory, env, network_manager, exploration_helper, replay_f, settings):
+    def __init__(self, agent: rl.Agent, replay_memory, env, network_manager, exploration_helper, replay_f, settings):
         self.agent = agent
         self.replay_memory = replay_memory
         self.env = env
@@ -122,7 +97,7 @@ class DQNTeacher:
         for i in range(self.settings.N_EPISODES):
             self.current_episode = i
             self.loss.append(0)
-            env.reset()
+            self.env.reset()
             state = self.agent.observe()
             total_reward = 0
 
@@ -136,10 +111,10 @@ class DQNTeacher:
                     self.env.display()
                 new_state = self.agent.observe()
 
-                replay_memory.add(state, action, reward, new_state, is_terminal)
+                self.replay_memory.add(state, action, reward, new_state, is_terminal)
                 total_reward += reward
 
-                if len(replay_memory) > self.settings.BATCH_SIZE and j % self.settings.REPLAY_FREQUENCY == 0:
+                if len(self.replay_memory) > self.settings.BATCH_SIZE and j % self.settings.REPLAY_FREQUENCY == 0:
                     loss = self.replay(self.network_manager, self.replay_memory, self.settings.BATCH_SIZE,
                                        self.settings.DISCOUNT_FACTOR)
                     self.loss[i] += loss
@@ -153,20 +128,20 @@ class DQNTeacher:
                 if i % 10 == 0:
                     self.test_q_table.update(state, action, q_values.max())
 
-            exploration_helper.update_epsilon()
+            self.exploration_helper.update_epsilon()
             self.rewards.append(total_reward)
-            print(f'Epsilon: {exploration_helper.epsilon}')
-            print(f'Total reward: {total_reward}')
+            print(f'Epsilon: {self.exploration_helper.epsilon}')
+            # print(f'Total reward: {total_reward}')
             if i % 20 == 0:
                 r = visualiser.moving_average(self.rewards, 100)[-1]
                 l = visualiser.moving_average(self.loss, 100)[-1]
                 print(f'loss: {l}')
                 self.plot_manager.update_plot('reward', i, r)
                 self.plot_manager.update_plot('loss', i, l)
-                print(self.test_q_table)
+                # print(self.test_q_table)
 
 
-config = configs.config3
+config = configs.config2
 M = len(config)
 N = len(config[0])
 
@@ -186,7 +161,7 @@ class Settings:
 
 
 class Settings2:
-    N_EPISODES = 2000
+    N_EPISODES = 1000
     EPISODE_LENGTH = 300
     MEMORY_SIZE = 600
     REPLAY_FREQUENCY = 3
@@ -206,7 +181,7 @@ class TableSettings:
     REPLAY_FREQUENCY = 4
     START_EPSILON = 1
     STOP_EPSILON = 0.1
-    INPUT_DIM = 3 * 3 * 3
+    INPUT_DIM = M * N * 3
     N_ACTIONS = 4
     BATCH_SIZE = 64
     DISCOUNT_FACTOR = 0.975
@@ -214,10 +189,10 @@ class TableSettings:
 
 
 if __name__ == '__main__':
-    settings = Settings()
+    settings = Settings2()
     env = gridworld_env.GridworldEnv(M, N, grid=configs.to_state(config))
     exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
-    agent = Agent('test1', env)
+    agent = rl.Agent('test1', env)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
     network_manager = NetworkManager(settings.INPUT_DIM, settings.N_ACTIONS)
     q_table = q_learning.QTable(16, settings.N_ACTIONS)
