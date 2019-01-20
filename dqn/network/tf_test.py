@@ -1,5 +1,5 @@
 import tensorflow as tf
-from dqn.brain import tf_network
+from dqn.network import tf_network
 import numpy as np
 
 

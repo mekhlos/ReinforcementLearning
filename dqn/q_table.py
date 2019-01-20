@@ -1,11 +1,6 @@
 import numpy as np
 
 
-class QLearning:
-    def __init__(self):
-        pass
-
-
 class QTable:
     def __init__(self, n_states, n_actions):
         self.n_states = n_states
