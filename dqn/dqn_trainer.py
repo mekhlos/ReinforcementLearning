@@ -1,16 +1,8 @@
-import sys
-import os
-import root_file
 import rl
-
-gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
-sys.path.append(gwpath)
 
 import numpy as np
 
 from utils import visualiser
-from environments.GridworldEnv.gridworld import Actions
-from dqn import q_table
 
 
 def batch_replay(network_manager, replay_memory, batch_size, discount_factor):
@@ -74,12 +66,12 @@ class DQNTeacher:
         self.current_episode = 0
         self.plot_manager = visualiser.DataPlotter()
         # self.plot_manager.add_plot('loss', (0, settings.N_EPISODES), (-1, 10), 'loss')
-        self.plot_manager.add_plot('reward', (0, settings.N_EPISODES), (-50, 20), 'reward')
+        self.plot_manager.add_plot('reward', (0, settings.N_EPISODES), (-50, 50), 'reward')
         self.settings = settings
         self.loss = []
         self.rewards = []
         self.replay = replay_f
-        self.test_q_table = q_table.QTable(settings.INPUT_DIM // 3, 4)
+        # self.test_q_table = q_table.QTable(settings.INPUT_DIM // 3, 4)
 
         # self.plot_manager.add_plot('q_values', (0, settings.N_EPISODES), (0, 100), 'q_values')
 
@@ -99,11 +91,10 @@ class DQNTeacher:
             total_reward = 0
 
             for j in range(self.settings.EPISODE_LENGTH):
-
                 q_values = self.network_manager.predict_one(state)
 
                 action = self.exploration_helper.epsilon_greedy(q_values)
-                new_state, reward, is_terminal, _ = self.env.update(Actions.get_actions()[action])
+                _, reward, is_terminal, _ = self.env.update(self.env.get_action_space()[action])
                 if i % 10 == 0:
                     self.env.display()
                 new_state = self.agent.observe()
@@ -122,9 +113,6 @@ class DQNTeacher:
 
                 state = new_state
 
-                if i % 10 == 0:
-                    self.test_q_table.update(state, action, q_values.max())
-
             self.exploration_helper.update_epsilon()
             self.rewards.append(total_reward)
             print(f'Epsilon: {self.exploration_helper.epsilon}')
@@ -135,7 +123,6 @@ class DQNTeacher:
                 print(f'loss: {l}')
                 self.plot_manager.update_plot('reward', i, r)
                 # self.plot_manager.update_plot('loss', i, l)
-                # print(self.test_q_table)
 
 
 if __name__ == '__main__':

@@ -6,8 +6,9 @@ import rl
 gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
 sys.path.append(gwpath)
 
-from dqn.network.tf_network import NetworkManager
-# from dqn.network import NetworkManager
+from dqn.gridworld1.network_architecture import MyNetwork, MyNetworkTrainer
+
+from networks.tf_network import NetworkManager
 from dqn.memory.replay_memory import ReplayMemory
 from dqn.exploration_strategy import ExplorationStrategy
 from environments.GridworldEnv import gridworld_env
@@ -72,7 +73,7 @@ if __name__ == '__main__':
     exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
     agent = rl.Agent('test1', env)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
-    network_manager = NetworkManager(settings.INPUT_DIM, settings.N_ACTIONS)
+    network_manager = NetworkManager(settings.INPUT_DIM, settings.N_ACTIONS, MyNetwork, MyNetworkTrainer)
     q_table = q_table.QTable(16, settings.N_ACTIONS)
     dqn = dqn_trainer.DQNTeacher(agent, replay_memory, env, network_manager, exploration_helper,
                                  dqn_trainer.batch_replay, settings)

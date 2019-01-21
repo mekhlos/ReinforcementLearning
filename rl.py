@@ -7,12 +7,16 @@ class Policy:
 
 
 class Agent:
-    def __init__(self, agent_id, environment, policy=None):
+    def __init__(self, agent_id, environment, observe_function=None, policy=None):
         self.agent_id = agent_id
         self.environment = environment
         self.policy = policy
+        self.observe_f = observe_function
 
     def observe(self):
+        if self.observe_f is not None:
+            return self.observe_f()
+
         environment_state = self.environment.get_state()
         state = environment_state[[0, 1, 3]]
         return state.flatten()

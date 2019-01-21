@@ -6,12 +6,15 @@ class QTable:
         self.n_states = n_states
         self.n_actions = n_actions
         self.table = np.zeros((n_states, n_actions))
+        self.state_to_ix_map = {}
 
     def state_to_ix(self, state):
         assert len(state.shape) == 1
-        v = state[:self.n_states]
-        ix = np.where(v > 0)[0].item()
-        return ix
+        v = tuple(state[:self.n_states])
+        if v not in self.state_to_ix_map:
+            self.state_to_ix_map[v] = len(self.state_to_ix_map)
+
+        return self.state_to_ix_map[v]
 
     def update(self, state, action, value):
         ix = self.state_to_ix(state)
