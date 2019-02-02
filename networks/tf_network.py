@@ -46,16 +46,15 @@ class NetworkInterface:
         self.x = x
         self.y_pred = y_pred
         self.session = session
+        self.saver = tf.train.Saver()
 
     def predict(self, x):
         feed_dict = {self.x: x}
         res = self.session.run(self.y_pred, feed_dict=feed_dict)
         return res
 
-
-class TensorflowSaver:
-    def __init__(self):
-        pass
+    def restore(self, path):
+        self.saver.restore(self.session, path)
 
 
 class NetworkManager:
@@ -65,8 +64,9 @@ class NetworkManager:
 
         self.network = Network(input_dim, output_dim)
         self.trainer = NetworkTrainer(self.session, self.network.y_pred, self.network.x, output_dim)
-
         self.network_interface = NetworkInterface(self.session, self.network.x, self.network.y_pred)
+
+        self.saver = tf.train.Saver()
 
         init = tf.global_variables_initializer()
         self.session.run(init)
@@ -80,6 +80,16 @@ class NetworkManager:
     def learn(self, x, y):
         self.trainer.optimise(x, y)
         return self.trainer.compute_loss(x, y)
+
+    def save(self, path):
+        self.saver.save(self.session, path)
+        print('Model saved')
+
+    def restore(self, path):
+        self.saver.restore(self.session, path)
+
+    def write_summaries(self):
+        pass
 
 
 if __name__ == '__main__':

@@ -1,23 +1,21 @@
 import sys
 import os
 import root_file
-import rl
 
 gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
 sys.path.append(gwpath)
 
-from dqn.gridworld1.network_architecture import MyNetwork, MyNetworkTrainer
-
-from networks.tf_network import NetworkManager
-from dqn.memory.replay_memory import ReplayMemory
-from dqn.exploration_strategy import ExplorationStrategy
+from DQN.memory.replay_memory import ReplayMemory
+from DQN.exploration_strategy import ExplorationStrategy
 from environments.GridworldEnv import gridworld_env
-from environments.GridworldEnv.grid_configs import configs
-from dqn import q_table, dqn_trainer
+from environments.GridworldEnv.grid_configs import configs as grid_configs
+from DQN import q_table, trainer
+from DQN.gridworld1 import config
+from DQN.gridworld1.my_network import MyNetworkManager
 
 
 class Settings:
-    CONFIG = configs.config2
+    CONFIG = grid_configs.config2
     M = len(CONFIG)
     N = len(CONFIG[0])
     N_EPISODES = 1000
@@ -34,7 +32,7 @@ class Settings:
 
 
 class Settings2:
-    CONFIG = configs.config2
+    CONFIG = grid_configs.config2
     M = len(CONFIG)
     N = len(CONFIG[0])
     N_EPISODES = 1000
@@ -51,7 +49,7 @@ class Settings2:
 
 
 class Settings3:
-    CONFIG = configs.config1
+    CONFIG = grid_configs.config1
     M = len(CONFIG)
     N = len(CONFIG[0])
     N_EPISODES = 2500
@@ -68,13 +66,26 @@ class Settings3:
 
 
 if __name__ == '__main__':
-    settings = Settings()
-    env = gridworld_env.GridworldEnv(settings.M, settings.N, grid=configs.to_state(settings.CONFIG))
+    settings = Settings2()
+    env = gridworld_env.GridworldEnv(settings.M, settings.N, grid=grid_configs.to_state(settings.CONFIG))
     exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
-    agent = rl.Agent('test1', env)
+    agent = config.GridworldAgent('test1', env)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
-    network_manager = NetworkManager(settings.INPUT_DIM, settings.N_ACTIONS, MyNetwork, MyNetworkTrainer)
-    q_table = q_table.QTable(16, settings.N_ACTIONS)
-    dqn = dqn_trainer.DQNTeacher(agent, replay_memory, env, network_manager, exploration_helper,
-                                 dqn_trainer.batch_replay, settings)
+    network_manager = MyNetworkManager(
+        settings.INPUT_DIM,
+        settings.N_ACTIONS,
+        './models/model.ckpt',
+        './tensorboard',
+        True
+    )
+
+    dqn = trainer.DQNTeacher(
+        agent,
+        replay_memory,
+        env,
+        network_manager,
+        exploration_helper,
+        settings
+    )
+
     dqn.train()

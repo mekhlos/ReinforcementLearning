@@ -1,4 +1,4 @@
-from dqn import dqn_trainer
+from DQN import trainer
 import numpy as np
 
 n = 5
@@ -23,5 +23,5 @@ class MockNetwork:
         return np.ones((len(x), 4))
 
 
-dqn_trainer.batch_replay(MockNetwork(), MockMemory(), n, 0.9)
-dqn_trainer.iterative_replay(MockNetwork(), MockMemory(), n, 0.9)
+trainer.batch_replay(MockNetwork(), MockMemory(), n, 0.9)
+trainer.iterative_replay(MockNetwork(), MockMemory(), n, 0.9)

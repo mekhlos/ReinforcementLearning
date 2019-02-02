@@ -4,7 +4,7 @@ from networks import tf_network
 
 class MyNetwork(tf_network.Network):
     def build_graph(self, x, output_dim):
-        layer1 = tf.layers.dense(x, 128, activation=tf.nn.relu, trainable=True, use_bias=True, name='l_1')
+        layer1 = tf.layers.dense(x, 64, activation=tf.nn.relu, trainable=True, use_bias=True, name='l_1')
         layer2 = tf.layers.dropout(layer1, 0.2, training=True, name='l_2')
         layer3 = tf.layers.dense(layer2, 16, activation=tf.nn.relu, trainable=True, use_bias=True, name='l_3')
         layer4 = tf.layers.dropout(layer3, 0.2, training=True, name='l_4')

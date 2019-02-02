@@ -1,5 +1,6 @@
 import tensorflow as tf
-from networks import tf_network
+# from networks import tf_network
+from DQN.gridworld1 import my_network
 import numpy as np
 
 
@@ -26,9 +27,15 @@ print(x_test.shape)
 print(y_train.shape)
 print(y_test.shape)
 
-nm = tf_network.NetworkManager(x_train.shape[1], y_train.shape[1])
+nm = my_network.MyNetworkManager(
+    x_train.shape[1],
+    y_train.shape[1],
+    './models/model.ckpt',
+    './tensorboard/',
+    True
+)
 
-for i in range(1000):
+for i in range(10000):
     ix = np.random.choice(x_train.shape[0], 128, replace=False)
     x_batch = x_train[ix]
     y_batch = y_train[ix]
