@@ -68,7 +68,7 @@ class DQNTeacher:
         loss = self.network_manager.learn(state, target)
 
         mean_reward = np.mean(self.reward_per_episode_list[:-10])
-        # self.network_manager.write_summaries(self.episode_ix, state, target, mean_reward)
+        self.network_manager.write_summaries(self.episode_ix, state, target, mean_reward)
 
         return loss
 
@@ -79,11 +79,11 @@ class DQNTeacher:
         print('==========================================')
         print(f'Episode {self.episode_ix}')
         print(f'Finished in {n_steps} steps')
-        print(f'Episode loss: {self.loss_per_episode_list[-1]}')
-        print(f'Episode reward: {self.reward_per_episode_list[-1]}')
-        print(f'Mean Reward: {mean_reward}')
-        print(f'Max reward so far: {maximum_reward_recorded}')
-        print(f'Epsilon: {self.exploration_helper.epsilon}')
+        print(f'Episode loss: {self.loss_per_episode_list[-1]:.7f}')
+        print(f'Episode reward: {self.reward_per_episode_list[-1]:.3f}')
+        print(f'Mean Reward: {mean_reward:.3f}')
+        print(f'Max reward so far: {maximum_reward_recorded:.3f}')
+        print(f'Epsilon: {self.exploration_helper.epsilon:.3f}')
         print()
 
     def train(self):
@@ -132,11 +132,6 @@ class DQNTeacher:
                 self.network_manager.save(path='./models/model.ckpt')
 
         self.network_manager.save(path='./models/model.ckpt')
-
-
-class DQNTester:
-    def __init__(self):
-        pass
 
 
 if __name__ == '__main__':

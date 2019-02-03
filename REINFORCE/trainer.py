@@ -1,27 +1,10 @@
-import gym
 import rl
 import numpy as np
 
-from REINFORCE.cartpole import network as network_module
-from REINFORCE import memory as memory_module
-from environments import env_wrapper
-from utils import helpers
-
-
-class Settings:
-    N_EPISODES = 300
-    INPUT_DIM = 4
-    N_ACTIONS = 2
-    DISCOUNT_FACTOR = 0.96
-
-
-class Hyperparameters:
-    LEARNING_RATE = 1e-2
-
 
 class REINFORCETeacher:
-    def __init__(self, agent: rl.Agent, memory, env, network_manager, settings):
-        self.agent = agent
+    def __init__(self, agent, memory, env, network_manager, settings):
+        self.agent: rl.Agent = agent
         self.memory = memory
         self.network_manager = network_manager
         self.env = env
@@ -31,7 +14,7 @@ class REINFORCETeacher:
         self.reward_per_episode_list = []
         self.loss_per_episode_list = []
 
-    def learn_episode(self, episode_ix):
+    def learn_episode(self):
         s, a, r = self.memory.retrieve()
 
         loss = self.network_manager.learn(
@@ -43,8 +26,8 @@ class REINFORCETeacher:
         mean_reward = np.mean(self.reward_per_episode_list[:-10])
 
         # Write TF Summaries
-        network_manager.write_summaries(
-            episode_ix=episode_ix,
+        self.network_manager.write_summaries(
+            global_step=self.episode_ix,
             state=s,
             true_action=a,
             discounted_episode_rewards=r,
@@ -60,17 +43,17 @@ class REINFORCETeacher:
         print('==========================================')
         print(f'Episode {self.episode_ix}')
         print(f'Finished in {n_steps} steps')
-        print(f'Episode loss: {self.loss_per_episode_list[-1]}')
-        print(f'Episode reward: {self.reward_per_episode_list[-1]}')
-        print(f'Mean Reward: {mean_reward}')
-        print(f'Max reward so far: {maximum_reward_recorded}')
+        print(f'Episode loss: {self.loss_per_episode_list[-1]:.7f}')
+        print(f'Episode reward: {self.reward_per_episode_list[-1]:.3f}')
+        print(f'Mean Reward: {mean_reward:.3f}')
+        print(f'Max reward so far: {maximum_reward_recorded:.3f}')
         print()
 
     def train(self):
         self.reward_per_episode_list = []
         self.loss_per_episode_list = []
 
-        for episode_ix in range(self.settings.N_EPISODES):
+        for self.episode_ix in range(self.settings.N_EPISODES):
 
             self.env.reset()
             state = self.agent.observe()
@@ -89,44 +72,27 @@ class REINFORCETeacher:
 
                 self.memory.add(state, action, reward)
 
-                if episode_ix % 20 == 0:
+                if self.episode_ix % 20 == 0:
                     self.env.display()
 
                 if is_terminal:
+                    loss = self.learn_episode()
+
                     self.reward_per_episode_list.append(np.sum(self.memory.rewards))
-
-                    loss = self.learn_episode(episode_ix)
-                    self.memory.reset()
-
                     self.loss_per_episode_list.append(loss)
                     self.print_summary(len(self.memory))
 
+                    self.memory.reset()
                     break
 
                 state = new_state
 
             # Save model
-            if episode_ix % 100 == 0:
+            if self.episode_ix % 100 == 0:
                 self.network_manager.save(path='./models/model.ckpt')
 
         self.network_manager.save(path='./models/model.ckpt')
 
 
 if __name__ == '__main__':
-    settings = Settings()
-    hyperparams = Hyperparameters()
-
-    env = env_wrapper.EnvWrapper(gym.make('CartPole-v0'))
-
-    agent = rl.Agent('test1', env, observe_function=env.observe_f)
-    network_manager = network_module.NetworkManager(
-        settings.INPUT_DIM,
-        settings.N_ACTIONS,
-        network_module.Network,
-        network_module.NetworkTrainer,
-        hyperparams
-    )
-    memory = memory_module.Memory(settings.DISCOUNT_FACTOR, settings.N_ACTIONS)
-    settings.N_ACTIONS = env.env.action_space.n
-    trainer = REINFORCETeacher(agent, memory, env, network_manager, settings)
-    trainer.train()
+    pass

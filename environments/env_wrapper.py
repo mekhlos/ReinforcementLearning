@@ -3,9 +3,9 @@ import gym
 from environments import environment_interface
 
 
-class EnvWrapper(environment_interface):
-    def __init__(self, gym_env: gym.Env):
-        self.env = gym_env
+class EnvWrapper(environment_interface.EnvironmentInterface):
+    def __init__(self, gym_env):
+        self.env: gym.Env = gym_env
         self.state = None
 
     def display(self):
@@ -28,9 +28,6 @@ class EnvWrapper(environment_interface):
             raise Exception('Call reset or update first!')
 
         return np.array(self.state)
-
-    def observe_f(self):
-        return self.get_state()
 
     def close(self):
         self.env.close()

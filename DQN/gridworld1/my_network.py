@@ -12,10 +12,9 @@ class MyNetwork(network.Network):
         self.y_pred = self.build_graph()
 
     def build_graph(self):
-        layer1 = tf.layers.dense(self.x, 1024, activation=tf.nn.tanh, trainable=True, use_bias=True, name='l_1')
-        layer2 = tf.layers.dropout(layer1, 0.2, training=True, name='l_2')
-        layer3 = tf.layers.dense(layer2, self.output_dim, activation=tf.nn.tanh, use_bias=True, trainable=True,
-                                 name='l_out')
+        layer1 = tf.layers.dense(self.x, 1024, activation=tf.nn.tanh, name='l_1')
+        layer2 = tf.layers.dropout(layer1, 0.2, name='l_2')
+        layer3 = tf.layers.dense(layer2, self.output_dim, activation=tf.nn.tanh, name='l_out')
 
         return layer3
 
@@ -102,5 +101,5 @@ class MyNetworkManager:
         self.saver.restore(self.session, path)
         print('Model restored')
 
-    def write_summaries(self, x, y, mean_reward, global_step):
+    def write_summaries(self, global_step, x, y, mean_reward):
         self.summary_manager.write_summaries(global_step, x, y, mean_reward)

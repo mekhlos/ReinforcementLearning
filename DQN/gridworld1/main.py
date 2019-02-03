@@ -9,7 +9,7 @@ from DQN.memory.replay_memory import ReplayMemory
 from DQN.exploration_strategy import ExplorationStrategy
 from environments.GridworldEnv import gridworld_env
 from environments.GridworldEnv.grid_configs import configs as grid_configs
-from DQN import q_table, trainer
+from DQN import trainer
 from DQN.gridworld1 import config
 from DQN.gridworld1.my_network import MyNetworkManager
 
