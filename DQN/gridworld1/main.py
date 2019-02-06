@@ -1,6 +1,7 @@
 import sys
 import os
 import root_file
+import rl
 
 gwpath = os.path.join(root_file.ROOT_DIR, 'environments/GridworldEnv')
 sys.path.append(gwpath)
@@ -65,19 +66,14 @@ class Settings3:
     ALPHA = 1 / BATCH_SIZE / 100
 
 
-if __name__ == '__main__':
-    settings = Settings2()
-    env = gridworld_env.GridworldEnv(settings.M, settings.N, grid=grid_configs.to_state(settings.CONFIG))
+class Hyperparams:
+    learning_rate = 1e-3
+    n_hidden_layer1 = 1024
+
+
+def train():
     exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
-    agent = config.GridworldAgent('test1', env)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
-    network_manager = MyNetworkManager(
-        settings.INPUT_DIM,
-        settings.N_ACTIONS,
-        './models/model.ckpt',
-        './tensorboard',
-        True
-    )
 
     dqn = trainer.DQNTeacher(
         agent,
@@ -89,3 +85,31 @@ if __name__ == '__main__':
     )
 
     dqn.train()
+
+
+def test():
+    network_manager.restore('./models/model.ckpt', )
+    rl.test_agent(env, agent, network_manager, 10)
+
+
+if __name__ == '__main__':
+    is_train_mode = True
+
+    settings = Settings2()
+    hyperparams = Hyperparams()
+    hyperparams.input_dim = settings.INPUT_DIM
+    hyperparams.output_dim = settings.N_ACTIONS
+
+    env = gridworld_env.GridworldEnv(settings.M, settings.N, grid=grid_configs.to_state(settings.CONFIG))
+    agent = config.GridworldAgent('test1', env)
+    network_manager = MyNetworkManager(
+        './models/model.ckpt',
+        './tensorboard',
+        is_train_mode,
+        hyperparams
+    )
+
+    if is_train_mode:
+        train()
+    else:
+        test()

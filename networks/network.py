@@ -3,6 +3,9 @@ from utils import logging_helper
 
 
 class Network:
+    def __init__(self, hyperparams):
+        self.hyperparams = hyperparams
+
     def build_graph(self):
         raise NotImplementedError('Please implement me!')
 
@@ -14,8 +17,9 @@ class Network:
 
 
 class NetworkTrainer:
-    def __init__(self, session, network):
+    def __init__(self, session, network, hyperparams):
         self.session: tf.Session = session
+        self.hyperparams = hyperparams
         self.network: Network = network
         self.loss = self.build_loss()
         self.train_op = self.build_optimiser()
@@ -84,40 +88,57 @@ class NetworkInterface:
     def restore(self, path):
         self.saver.restore(self.session, path)
 
-# class NetworkManager:
-#     def __init__(self, model_path, tensorboard_path, is_train_mode):
-#         self._logger = logging_helper.get_logger(self.__class__.__name__)
-#         self.saver = tf.train.Saver()
-#
-#         self.network = MyNetwork(input_dim, output_dim)
-#         self.network_interface = MyNetworkInterface(self.session, self.network)
-#         self.session = tf.Session()
-#
-#         if is_train_mode:
-#             self.trainer = MyNetworkTrainer(self.session, self.network, hyperparams)
-#             self.summary_manager = MySummaryManager(self.session, self.network, self.trainer, tensorboard_path)
-#         else:
-#             self.restore(model_path)
-#
-#         init = tf.global_variables_initializer()
-#         self.session.run(init)
-#
-#     def predict(self, *args, **kwargs):
-#         raise NotImplementedError('Please implement me!')
-#
-#     def predict_one(self, *args, **kwargs):
-#         raise NotImplementedError('Please implement me!')
-#
-#     def learn(self, *args, **kwargsy):
-#         raise NotImplementedError('Please implement me!')
-#
-#     def save(self, path):
-#         self.saver.save(self.session, path)
-#         print('Model saved')
-#
-#     def restore(self, path):
-#         self.saver.restore(self.session, path)
-#         print('Model restored')
-#
-#     def write_summaries(self, *args, **kwargs):
-#         raise NotImplementedError('Please implement me!')
+
+class NetworkManager:
+    def __init__(self, model_path, tensorboard_path, is_train_mode, hyperparams):
+        self._logger = logging_helper.get_logger(self.__class__.__name__)
+
+        self.session = tf.Session()
+        self.hyperparams = hyperparams
+        self.tensorboard_path = tensorboard_path
+
+        self.network = self.add_network()
+        self.network_interface = self.add_network_interface()
+
+        self.saver = tf.train.Saver()
+
+        if is_train_mode:
+            self.trainer = self.add_trainer()
+            self.summary_manager = self.add_summary_writer()
+        else:
+            self.restore(model_path)
+
+        init = tf.global_variables_initializer()
+        self.session.run(init)
+
+    def add_network(self):
+        raise NotImplementedError('Please implement me!')
+
+    def add_trainer(self):
+        raise NotImplementedError('Please implement me!')
+
+    def add_summary_writer(self):
+        raise NotImplementedError('Please implement me!')
+
+    def add_network_interface(self):
+        raise NotImplementedError('Please implement me!')
+
+    def predict(self, x):
+        return self.network_interface.predict(x)
+
+    def predict_one(self, x):
+        return self.predict(x.reshape(1, -1))
+
+    def learn(self, *args, **kwargs):
+        raise NotImplementedError('Please implement me!')
+
+    def save(self, path):
+        self.saver.save(self.session, path)
+        print('Model saved')
+
+    def restore(self, path):
+        self.saver.restore(self.session, path)
+        print('Model restored')
+
+    def write_summaries(self, *args, **kwargs):
+        raise NotImplementedError('Please implement me!')

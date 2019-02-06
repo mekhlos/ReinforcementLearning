@@ -23,6 +23,12 @@ class Settings:
     ALPHA = 1 / BATCH_SIZE / 100
 
 
+class Hyperparams:
+    learning_rate = 1e-3
+    n_hidden_layer1 = 64
+    n_hidden_layer2 = 16
+
+
 def train():
     exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
@@ -45,15 +51,23 @@ def test():
 
 
 if __name__ == '__main__':
+    is_train_mode = True
+
     settings = Settings()
+    hyperparams = Hyperparams()
+    hyperparams.input_dim = settings.INPUT_DIM
+    hyperparams.output_dim = settings.N_ACTIONS
+
     env = env_wrapper.EnvWrapper(gym.make('CartPole-v0'))
     agent = config.CartpoleAgent('test1', env)
     network_manager = MyNetworkManager(
-        settings.INPUT_DIM,
-        settings.N_ACTIONS,
         './models/model.ckpt',
         './tensorboard',
-        True
+        is_train_mode,
+        hyperparams
     )
 
-    test()
+    if is_train_mode:
+        train()
+    else:
+        test()

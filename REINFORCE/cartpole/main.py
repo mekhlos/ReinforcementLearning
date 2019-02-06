@@ -16,7 +16,9 @@ class Settings:
 
 
 class Hyperparameters:
-    LEARNING_RATE = 1e-2
+    learning_rate = 1e-2
+    n_hidden_layer1 = 10
+    n_hidden_layer2 = 2
 
 
 def train():
@@ -31,20 +33,25 @@ def test():
 
 
 if __name__ == '__main__':
+    is_train_mode = True
+
     settings = Settings()
     hyperparams = Hyperparameters()
 
     env = env_wrapper.EnvWrapper(gym.make('CartPole-v0'))
     settings.N_ACTIONS = env.env.action_space.n
+    hyperparams.input_dim = settings.INPUT_DIM
+    hyperparams.output_dim = settings.N_ACTIONS
 
     agent = config.CartpoleAgent('test1', env)
     network_manager = my_network.MyNetworkManager(
-        settings.INPUT_DIM,
-        settings.N_ACTIONS,
         './models/model.ckpt',
         './tensorboard',
-        True
-        # hyperparams
+        True,
+        hyperparams
     )
 
-    test()
+    if is_train_mode:
+        train()
+    else:
+        test()
