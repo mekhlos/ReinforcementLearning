@@ -1,7 +1,6 @@
 import rl
 
 import numpy as np
-from utils import helpers
 
 
 def iterative_replay(network_manager, replay_memory, batch_size, discount_factor):

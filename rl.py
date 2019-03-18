@@ -60,7 +60,7 @@ def test_agent(env, agent, network_interface, n_trials):
             state = new_state
 
     env.close()
-    print(f'Score over time: {sum(rewards) / n_trials}:.3f')
+    print(f'Score over time: {sum(rewards) / n_trials:.3f}')
 
 
 if __name__ == '__main__':

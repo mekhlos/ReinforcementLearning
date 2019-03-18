@@ -14,11 +14,11 @@ class MyNetwork(network.Network):
         self.y_pred = self.build_graph()
 
     def build_graph(self):
-        layer1 = tf.layers.dense(self.x, self.hyperparams.n_hidden_layer1, activation=tf.nn.relu, name='l_1')
-        layer2 = tf.layers.dropout(layer1, 0.2, name='l_2')
-        layer3 = tf.layers.dense(layer2, self.hyperparams.n_hidden_layer2, activation=tf.nn.relu, name='l_3')
-        layer4 = tf.layers.dropout(layer3, 0.2, name='l_4')
-        layer5 = tf.layers.dense(layer4, self.output_dim, activation=tf.identity, name='l_out')
+        layer1 = tf.keras.layers.Dense(self.hyperparams.n_hidden_layer1, activation=tf.nn.relu, name='l_1')(self.x)
+        layer2 = tf.keras.layers.Dropout(0.2, name='l_2')(layer1)
+        layer3 = tf.keras.layers.Dense(self.hyperparams.n_hidden_layer2, activation=tf.nn.relu, name='l_3')(layer2)
+        layer4 = tf.keras.layers.Dropout(0.2, name='l_4')(layer3)
+        layer5 = tf.keras.layers.Dense(self.output_dim, activation=tf.identity, name='l_out')(layer4)
 
         return layer5
 
