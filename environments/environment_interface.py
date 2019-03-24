@@ -1,19 +1,19 @@
 class EnvironmentInterface:
 
     def display(self):
-        pass
+        raise NotImplementedError('Please implement me!')
 
     def get_action_space(self):
-        pass
+        raise NotImplementedError('Please implement me!')
 
     def update(self, action):
-        pass
+        raise NotImplementedError('Please implement me!')
 
     def reset(self):
-        pass
+        raise NotImplementedError('Please implement me!')
 
     def get_state(self):
-        pass
+        raise NotImplementedError('Please implement me!')
 
     def close(self):
-        pass
+        raise NotImplementedError('Please implement me!')
