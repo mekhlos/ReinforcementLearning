@@ -11,8 +11,8 @@ from DQN.exploration_strategy import ExplorationStrategy
 from environments.GridworldEnv import gridworld_env
 from environments.GridworldEnv.grid_configs import configs as grid_configs
 from DQN import trainer
-from DQN.gridworld1 import config
-from DQN.gridworld1.my_network import MyNetworkManager
+from DQN.gridworld import config
+from DQN.gridworld.my_network import MyNetworkManager
 
 
 class Settings:

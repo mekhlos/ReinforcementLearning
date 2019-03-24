@@ -1,6 +1,6 @@
 import tensorflow as tf
 # from networks import tf_network
-from DQN.gridworld1 import my_network
+from DQN.gridworld import my_network
 import numpy as np
 
 
