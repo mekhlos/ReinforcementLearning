@@ -45,7 +45,7 @@ def test_agent(env, agent, network_interface, n_trials):
 
         while True:
             env.display()
-            action = agent.get_next_action(state, network_interface)
+            action = agent.get_delta_position()
 
             _, reward, is_terminal, info = env.update(action)
             new_state = agent.observe()

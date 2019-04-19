@@ -13,14 +13,16 @@ import math
 import pygame
 import numpy as np
 
+from DQN.breakout.env_config import Config1 as config
+
 # Define some colors
 black = (0, 0, 0)
 white = (255, 255, 255)
 blue = (0, 0, 255)
 
 # Size of break-out blocks
-block_width = 23
-block_height = 15
+block_width = config.block_width
+block_height = config.block_height
 
 
 class Block(pygame.sprite.Sprite):
@@ -58,14 +60,14 @@ class Ball(pygame.sprite.Sprite):
     speed = 10.0
 
     # Floating point representation of where the ball is
-    x = 0.0
-    y = 180.0
+    x = float(config.ball_x)
+    y = float(config.ball_y)
 
     # Direction of ball (in degrees)
     direction = 200
 
-    width = 10
-    height = 10
+    width = config.ball_width
+    height = config.ball_height
 
     # Constructor. Pass in the color of the block, and its x and y position
     def __init__(self):
@@ -121,7 +123,7 @@ class Ball(pygame.sprite.Sprite):
             self.x = self.screenwidth - self.width - 1
 
         # Did we fall off the bottom edge of the screen?
-        if self.y > 600:
+        if self.y > config.width:
             return True
         else:
             return False
@@ -136,8 +138,8 @@ class Player(pygame.sprite.Sprite):
         # Call the parent's constructor
         super().__init__()
 
-        self.width = 75
-        self.height = 15
+        self.width = config.player_width
+        self.height = config.player_height
         self.image = pygame.Surface([self.width, self.height])
         self.image.fill((white))
 
@@ -146,10 +148,10 @@ class Player(pygame.sprite.Sprite):
         self.screenheight = pygame.display.get_surface().get_height()
         self.screenwidth = pygame.display.get_surface().get_width()
 
-        self.rect.x = 0
+        self.rect.x = config.player_x()
         self.rect.y = self.screenheight - self.height
 
-    def update(self, dummy):
+    def update2(self, dummy):
         """ Update the player position. """
         # Get where the mouse is
         pos = pygame.mouse.get_pos()
@@ -160,9 +162,9 @@ class Player(pygame.sprite.Sprite):
         if self.rect.x > self.screenwidth - self.width:
             self.rect.x = self.screenwidth - self.width
 
-    def update2(self, action):
+    def update(self, action):
         """ Update the player position. """
-        action = 3 if action == 0 else -3
+        action = config.action_scale if action == 0 else -config.action_scale
         self.rect.x += action
         # Make sure we don't push the player paddle
         # off the right side of the screen
@@ -176,7 +178,7 @@ class Game:
         pygame.init()
 
         # Create an 800x600 sized screen
-        self.screen = pygame.display.set_mode([800, 600])
+        self.screen = pygame.display.set_mode([config.height, config.width])
 
         # Set the title of the window
         pygame.display.set_caption('Breakout')
@@ -185,7 +187,7 @@ class Game:
         pygame.mouse.set_visible(0)
 
         # This is a font we use to draw text on the screen (size 36)
-        self.font = pygame.font.Font(None, 36)
+        self.font = pygame.font.Font(None, config.font_size)
 
         # Create a surface we can draw on
         self.background = pygame.Surface(self.screen.get_size())
@@ -205,23 +207,23 @@ class Game:
         self.balls.add(self.ball)
 
         # The top of the block (y position)
-        top = 80
+        top = config.block_start_from_top
 
         # Number of blocks to create
-        blockcount = 32
+        blockcount = config.n_block_columns
 
         # --- Create blocks
 
         # Five rows of blocks
-        for row in range(5):
+        for row in range(config.n_block_rows):
             # 32 columns of blocks
             for column in range(0, blockcount):
                 # Create a block (color,x,y)
-                block = Block(blue, column * (block_width + 2) + 1, top)
+                block = Block(blue, column * (config.block_width + config.block_padding) + 1, top)
                 self.blocks.add(block)
                 self.allsprites.add(block)
             # Move the top of the next row down
-            top += block_height + 2
+            top += config.block_height + config.block_padding
 
         # Clock to limit speed
         self.clock = pygame.time.Clock()
@@ -237,10 +239,17 @@ class Game:
         pixels = np.array(pygame.PixelArray(self.screen))
         return pixels
 
+    def display(self):
+        # Draw Everything
+        self.allsprites.draw(self.screen)
+
+        # Flip the screen and show what we've drawn
+        pygame.display.flip()
+
     def step(self, action):
 
         # Limit to 30 fps
-        self.clock.tick(15)
+        self.clock.tick(config.fps)
 
         # Clear the screen
         self.screen.fill(black)
@@ -261,7 +270,7 @@ class Game:
         if self.game_over:
             text = self.font.render("Game Over", True, white)
             textpos = text.get_rect(centerx=self.background.get_width() / 2)
-            textpos.top = 300
+            textpos.top = config.text_start_from_top
             self.screen.blit(text, textpos)
 
         # See if the ball hits the player paddle
