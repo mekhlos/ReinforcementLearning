@@ -1,25 +1,25 @@
 import rl
 
-from environments.BreakoutEnv import breakout_env
+from environments.CatcherEnv import catcher_env
 from DQN.memory.replay_memory import ReplayMemory
 from DQN.exploration_strategy import ExplorationStrategy
 from DQN import trainer
-from DQN.breakout import config
-from DQN.breakout.my_network import MyNetworkManager
-from DQN.breakout.env_config import Config1 as env_config
+from DQN.catcher import config
+from DQN.catcher.my_network import MyNetworkManager
+from DQN.catcher.env_config import Config1 as env_config
 from datetime import datetime
 
 
 class Settings:
-    N_EPISODES = 4000
+    N_EPISODES = 1000
     EPISODE_LENGTH = 1000
-    MEMORY_SIZE = 1200
+    MEMORY_SIZE = 250
     REPLAY_FREQUENCY = 4
     START_EPSILON = 1
     STOP_EPSILON = 0.01
     INPUT_DIM = env_config.height * env_config.width * 3
     N_ACTIONS = 2
-    BATCH_SIZE = 128
+    BATCH_SIZE = 64
     DISCOUNT_FACTOR = 0.98
 
 
@@ -51,15 +51,15 @@ def test():
 
 
 if __name__ == '__main__':
-    is_train_mode = False
+    is_train_mode = True
 
     settings = Settings()
     hyperparams = Hyperparams()
     hyperparams.input_dim = settings.INPUT_DIM
     hyperparams.output_dim = settings.N_ACTIONS
 
-    env = breakout_env.BreakoutEnv()
-    agent = config.BreakoutAgent('test1', env)
+    env = catcher_env.CatcherEnv()
+    agent = config.CatcherAgent('test1', env)
 
     str_time = datetime.now().strftime('%Y%m%d_%H%M%S')
     tensorboard_path = f'./tensorboard/{str_time}'
