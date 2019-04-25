@@ -60,6 +60,8 @@ class Config1:
     fps = 500
     text_start_from_top = 50
 
+    n_lives = 3
+
     @staticmethod
     def player_x():
         # return np.random.randint(0, Config1.width - Config1.player_width)

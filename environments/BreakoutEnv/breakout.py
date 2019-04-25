@@ -235,16 +235,18 @@ class Game:
         self.exit_program = False
 
     def get_pixels(self):
-        pixels = np.array(pygame.PixelArray(pygame.display.get_surface()))
+        # pixels = np.array(pygame.PixelArray(pygame.display.get_surface()))
         pixels = np.array(pygame.PixelArray(self.screen))
         return pixels
 
     def display(self):
+        pass
+
         # Draw Everything
-        self.allsprites.draw(self.screen)
+        # self.allsprites.draw(self.screen)
 
         # Flip the screen and show what we've drawn
-        pygame.display.flip()
+        # pygame.display.flip()
 
     def step(self, action):
 

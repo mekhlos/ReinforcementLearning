@@ -12,7 +12,7 @@ from datetime import datetime
 
 class Settings:
     N_EPISODES = 1000
-    EPISODE_LENGTH = 1000
+    EPISODE_LENGTH = 500
     MEMORY_SIZE = 250
     REPLAY_FREQUENCY = 4
     START_EPSILON = 1
@@ -20,7 +20,7 @@ class Settings:
     INPUT_DIM = env_config.height * env_config.width * 3
     N_ACTIONS = 2
     BATCH_SIZE = 64
-    DISCOUNT_FACTOR = 0.98
+    DISCOUNT_FACTOR = 0.95
 
 
 class Hyperparams:
@@ -30,7 +30,7 @@ class Hyperparams:
 
 
 def train():
-    exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.75, settings.START_EPSILON, settings.STOP_EPSILON)
+    exploration_helper = ExplorationStrategy(settings.N_EPISODES * 0.7, settings.START_EPSILON, settings.STOP_EPSILON)
     replay_memory = ReplayMemory(settings.MEMORY_SIZE)
 
     dqn = trainer.DQNTeacher(

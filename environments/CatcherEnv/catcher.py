@@ -7,7 +7,6 @@ from DQN.catcher.env_config import Config1 as config
 # Define some colors
 black = (0, 0, 0)
 white = (255, 255, 255)
-blue = (0, 0, 255)
 
 # Size of break-out blocks
 block_width = config.block_width
@@ -89,7 +88,7 @@ class Player(pygame.sprite.Sprite):
 
         self.rect.x = self.screenwidth / 2 - self.width / 2
         self.rect.y = self.screenheight - self.height
-        self.n_lives = 5
+        self.n_lives = config.n_lives
 
     def update(self, action):
         """ Update the player position. """

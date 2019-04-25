@@ -44,8 +44,8 @@ class Config1:
     ball_x = 100
     ball_y = 100
 
-    player_width = 50
-    player_height = 10
+    player_width = 40
+    player_height = 8
 
     font_size = 36
 
