@@ -3,43 +3,8 @@ import rl
 import numpy as np
 
 
-def iterative_replay(network_manager, replay_memory, batch_size, discount_factor):
-    state, action, reward, new_state, terminal_flag = replay_memory.sample(batch_size)
-    q_values = network_manager.predict(state)
-    new_q_values = network_manager.predict(new_state)
-    targets = q_values.copy()
-
-    for i, (r, a, t, new_q_value) in enumerate(zip(reward, action, terminal_flag, new_q_values)):
-        if t:
-            targets[i][a] = r
-        else:
-            targets[i][a] = r + discount_factor * new_q_value.max()
-
-    loss = network_manager.learn(state, targets)
-    return loss
-
-
-def table_replay(q_table, replay_memory, batch_size, discount_factor):
-    alpha = 1 / batch_size / 100
-    batch = replay_memory.sample(batch_size)
-
-    for i, (s, a, r, s2, t) in enumerate(zip(*batch)):
-        old_q = q_table[s, a]
-        new_q = q_table.get_q_values_for_state(s2)
-        if t:
-            target = r
-        else:
-            target = r + discount_factor * new_q.max()
-
-        update = (1 - alpha) * old_q + alpha * target
-
-        q_table.update(s, a, update)
-
-    return 0
-
-
 class DQNTeacher:
-    def __init__(self, agent, replay_memory, env, network_manager, exploration_helper, settings):
+    def __init__(self, agent, replay_memory, env, network_manager, exploration_helper, settings, save_path):
         self.agent: rl.Agent = agent
         self.replay_memory = replay_memory
         self.env = env
@@ -51,8 +16,9 @@ class DQNTeacher:
         self.step_ix = 0
         self.reward_per_episode_list = []
         self.loss_per_episode_list = []
+        self.save_path = save_path
 
-    def batch_replay(self):
+    def replay(self):
         state, action, reward, new_state, terminal_flag = self.replay_memory.sample(self.settings.BATCH_SIZE)
         q_values = self.network_manager.predict(state)
         terminal_ix = np.where(terminal_flag > 0)[0]
@@ -85,7 +51,7 @@ class DQNTeacher:
         print(f'Epsilon: {self.exploration_helper.epsilon:.3f}')
         print()
 
-    def train(self):
+    def train(self, display_frequency=10):
         self.reward_per_episode_list = []
         self.loss_per_episode_list = []
 
@@ -110,11 +76,10 @@ class DQNTeacher:
 
                 if len(self.replay_memory) > self.settings.BATCH_SIZE and \
                         step_ix % self.settings.REPLAY_FREQUENCY == 0:
-                    loss = self.batch_replay()
-
+                    loss = self.replay()
                     self.loss_per_episode_list[-1] += loss
 
-                if self.episode_ix % 10 == 0:
+                if self.episode_ix % display_frequency == 0:
                     self.env.display()
 
                 if is_terminal or step_ix + 1 == self.settings.EPISODE_LENGTH:
@@ -124,13 +89,13 @@ class DQNTeacher:
 
                 state = new_state
 
-            self.exploration_helper.update_epsilon()
+            self.exploration_helper.update_epsilon2()
 
             # Save model
             if self.episode_ix % 100 == 0:
-                self.network_manager.save(path='./models/model.ckpt')
+                self.network_manager.save(path=self.save_path)
 
-        self.network_manager.save(path='./models/model.ckpt')
+        self.network_manager.save(path=self.save_path)
 
 
 if __name__ == '__main__':

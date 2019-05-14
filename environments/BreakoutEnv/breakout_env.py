@@ -10,16 +10,6 @@ block_height = env_config.block_height
 blue = (0, 0, 255)
 
 
-def get_block_segment(pixels):
-    row_start = env_config.block_start_from_top
-    row_end = row_start + env_config.n_block_rows * (block_height + env_config.block_padding) + 1
-    return pixels.T[row_start:row_end]
-
-
-def count_blue_pixels(pixels):
-    return (pixels == 255).sum()
-
-
 class BreakoutEnv(environment_interface.EnvironmentInterface):
     BLOCK_SIZE = block_height * block_width
 
@@ -31,33 +21,38 @@ class BreakoutEnv(environment_interface.EnvironmentInterface):
     def get_action_space(self):
         return np.array([0, 1])
 
-    def _step(self, prev_state, action):
+    def _step(self, action):
+        n_blocks1 = len(self.game.blocks)
         self.game.step(action)
+        n_blocks2 = len(self.game.blocks)
+
         new_state = self.game.get_pixels()
-        reward = count_blue_pixels(get_block_segment(prev_state)) - count_blue_pixels(get_block_segment(new_state))
-        reward /= self.BLOCK_SIZE
-        assert reward == int(reward)
+
+        reward = n_blocks1 - n_blocks2
         is_done = self.game.game_over or self.game.exit_program
 
         return new_state, reward, is_done
 
-    def _step_wrap(self, prev_state, action):
+    def _step_wrap(self, action):
         frames = []
-        reward = 0
-        is_done = False
+        reward_sum = 0
+        is_done_final = False
+
         for i in range(3):
-            new_state, reward, is_done = self._step(prev_state[-1], action)
+            new_state, reward, is_done = self._step(action)
+            reward_sum += reward
+            is_done_final |= is_done
             frames.append(new_state)
 
-        return np.array(frames), reward, is_done
+        return np.array(frames), reward_sum, is_done_final
 
     def update(self, action):
-        frames, reward, is_done = self._step_wrap(self.prev_state, action)
+        frames, reward, is_done = self._step_wrap(action)
         self.prev_state = frames
         if is_done:
-            return frames, - 1, True, None
+            return frames, -1, True, None
         else:
-            return frames, reward / 10 - 0.001, False, None
+            return frames, reward - 0.001, False, None
 
     def reset(self):
         self.game = breakout.Game()

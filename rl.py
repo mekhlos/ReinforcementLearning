@@ -1,3 +1,6 @@
+import time
+
+
 class Policy:
     def __init__(self):
         pass
@@ -31,7 +34,7 @@ class Agent:
             self.take_action(action)
 
 
-def test_agent(env, agent, network_interface, n_trials):
+def test_agent(env, agent, network_interface, n_trials, wait_seconds=0):
     env.reset()
     rewards = []
 
@@ -43,12 +46,20 @@ def test_agent(env, agent, network_interface, n_trials):
         print('****************************************************')
         print(f'EPISODE {episode_ix}')
 
+        env.display()
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
+
         while True:
-            env.display()
             action = agent.get_next_action(state, network_interface)
+            print(action)
 
             _, reward, is_terminal, info = env.update(action)
             new_state = agent.observe()
+
+            env.display()
+            if wait_seconds > 0:
+                time.sleep(wait_seconds)
 
             total_rewards += reward
 

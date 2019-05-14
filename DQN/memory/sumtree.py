@@ -125,19 +125,13 @@ class SumTree:
         :return: a list of ids, a list of priorities and a list of entries
         """
 
-        # initialise lists containing samples
-        batch_id = [None] * n
-        batch_priorities = [None] * n
-        batch = [None] * n
-
         segment = self.total() / n
 
         a = [segment * i for i in range(n)]
         b = [segment * (i + 1) for i in range(n)]
         s = np.random.uniform(a, b)
 
-        for i in range(n):
-            (batch_id[i], batch_priorities[i], batch[i]) = self.get(s[i])
+        batch_id, batch_priorities, batch = zip(*[self.get(s[i]) for i in range(n)])
 
         return batch_id, batch_priorities, batch
 

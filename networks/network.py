@@ -1,5 +1,7 @@
 import tensorflow as tf
+
 from utils import logging_helper
+from pathlib import Path
 
 
 class Network:
@@ -133,11 +135,14 @@ class NetworkManager:
         raise NotImplementedError('Please implement me!')
 
     def save(self, path):
-        self.saver.save(self.session, path)
+        full_path = Path(path).joinpath('model.ckpt').resolve().as_posix()
+        print(full_path)
+        self.saver.save(self.session, full_path)
         print('Model saved')
 
     def restore(self, path):
-        self.saver.restore(self.session, path)
+        full_path = Path(path).joinpath('model.ckpt').resolve().as_posix()
+        self.saver.restore(self.session, full_path)
         print('Model restored')
 
     def write_summaries(self, *args, **kwargs):

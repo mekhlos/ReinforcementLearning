@@ -57,7 +57,7 @@ class Config1:
     block_start_from_top = 20
     block_padding = 1
 
-    fps = 500
+    fps = 20
     text_start_from_top = 50
 
     n_lives = 3
